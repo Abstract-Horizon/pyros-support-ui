@@ -62,10 +62,14 @@ class FlatThemeFactory(BaseUIFactory):
         elif hint == UiHint.ERROR:
             background_colour = pygame.color.THECOLORS['indianred4']
             mouse_over_colour = pygame.color.THECOLORS['indianred']
-
-        return Button(rect, on_click, on_hover, label,
-                      background_decoration=ButtonDecoration(background_colour),
-                      mouse_over_decoration=ButtonDecoration(mouse_over_colour))
+        if hint == UiHint.NO_DECORATION:
+            return Button(rect, on_click, on_hover, label,
+                          background_decoration=ButtonDecoration(background_colour),
+                          mouse_over_decoration=ButtonDecoration(mouse_over_colour))
+        else:
+            return Button(rect, on_click, on_hover, label,
+                          background_decoration=ButtonDecoration(background_colour),
+                          mouse_over_decoration=ButtonDecoration(mouse_over_colour))
 
     def panel(self, rect, background_colour=None, hint=UiHint.NORMAL):
         if background_colour is None:

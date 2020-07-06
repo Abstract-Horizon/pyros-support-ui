@@ -14,6 +14,15 @@
 from pyros_support_ui.components import *
 
 
+class BackgroundChangeDecoration(Component):
+    def __init__(self, colour):
+        super(BackgroundChangeDecoration, self).__init__(None)  # Call super constructor to store rectable
+        self.colour = colour
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.colour, self.rect)
+
+
 class MenuButtonBackgroundDecoration(Component):
     def __init__(self, colour):
         super(MenuButtonBackgroundDecoration, self).__init__(None)  # Call super constructor to store rectangle
@@ -127,10 +136,13 @@ class BoxBlueSFThemeFactory(BaseUIFactory):
             background_colour = self.background_colour
             mouse_over_colour = pygame.color.THECOLORS['red']
             mouse_over_background_colour = pygame.color.THECOLORS['darkred']
-
-        return Button(rect, on_click, on_hover, label,
-                      background_decoration=ButtonRectangleDecoration(colour, background_colour),
-                      mouse_over_decoration=ButtonRectangleDecoration(mouse_over_colour, mouse_over_background_colour))
+        if hint == UiHint.NO_DECORATION:
+            return Button(rect, on_click, on_hover, label,
+                          mouse_over_decoration=BackgroundChangeDecoration(mouse_over_background_colour))
+        else:
+            return Button(rect, on_click, on_hover, label,
+                          background_decoration=ButtonRectangleDecoration(colour, background_colour),
+                          mouse_over_decoration=ButtonRectangleDecoration(mouse_over_colour, mouse_over_background_colour))
 
     def panel(self, rect, background_colour=None, hint=UiHint.NORMAL):
         if background_colour is None:

@@ -296,12 +296,12 @@ class CardsCollection(Collection):
         self.selected_card_name = None
         self.selectedCardComponent = None
 
-    def addCard(self, name, component):
+    def add_card(self, name, component):
         self.cards[name] = component
         component._visible = False
         super(CardsCollection, self).add_component(component)
 
-    def selectCard(self, name):
+    def select_card(self, name):
         if name in self.cards:
             if self.selectedCardComponent is not None:
                 self.selectedCardComponent.set_visible(False)
@@ -426,7 +426,7 @@ class UIAdapter:
         self.screen_size = None if screen_size is None else screen_size
         self.top_component = None
         self.mouse_is_down = False
-        self.freq = 30
+        self.freq = freq
         self.frameclock = pygame.time.Clock()
         if self.screen is None and do_init:
             self.init()
@@ -476,6 +476,7 @@ class UIAdapter:
 
 
 class UiHint:
+    NO_DECORATION = 0
     NORMAL = 1
     WARNING = 2
     ERROR = 3
@@ -517,8 +518,8 @@ class BaseUIFactory:
     def button(self, rect, on_click=None, on_hover=None, label=None, hint=UiHint.NORMAL):
         return None
 
-    def text_button(self, rect, text, on_click=None, on_hover=None, hint=UiHint.NORMAL):
-        return self.button(rect, on_click, on_hover, self.label(None, text, h_alignment=ALIGNMENT.CENTER, v_alignment=ALIGNMENT.MIDDLE), hint=hint)
+    def text_button(self, rect, text, on_click=None, on_hover=None, hint=UiHint.NORMAL, font=None):
+        return self.button(rect, on_click, on_hover, self.label(None, text, h_alignment=ALIGNMENT.CENTER, v_alignment=ALIGNMENT.MIDDLE, font=font), hint=hint)
 
     def panel(self, rect, background_colour=None, hint=UiHint.NORMAL):
         return None

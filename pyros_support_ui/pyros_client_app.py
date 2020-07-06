@@ -224,7 +224,7 @@ class PyrosClientApp(Collection):
         # self.rovers_menu.add_menu_item("item1", partial(self._select_rover, 0), height=30)
         # self.rovers_menu.add_menu_item("item2", partial(self._select_rover, 1), height=30)
         self.add_component(self.rovers_menu)
-
+        self.on_connected_subscribers = []
         self.redefine_rect(self.ui_adapter.get_screen().get_rect())
 
     def _show_rovers_action(self, _button, _pos):
@@ -313,9 +313,21 @@ class PyrosClientApp(Collection):
         # self.content.draw(surface)
         # self.draw_top(surface)
 
-    @staticmethod
-    def pyros_init(pyros_mqtt_client_name, unique=True):
-        pyros.init(pyros_mqtt_client_name, unique=unique, host=None, port=1883, wait_to_connect=False)
+    def pyros_init(self, pyros_mqtt_client_name, unique=True):
+        pyros.init(pyros_mqtt_client_name, unique=unique, host=None, port=1883, wait_to_connect=False, on_connected=self._pyros_connected)
+
+    def _pyros_connected(self):
+        for on_connected_subscriber in self.on_connected_subscribers:
+            try:
+                on_connected_subscriber()
+            except Exception as ex:
+                print("MainLoop Exception: " + str(ex) + "\n" + ''.join(traceback.format_tb(ex.__traceback__)))
+
+    def add_on_connected_subscriber(self, subscriber):
+        self.on_connected_subscribers.append(subscriber)
+
+    def remove_on_connected_subscriber(self, subscriber):
+        self.on_connected_subscribers.remove(subscriber)
 
     def run_discovery(self):
         def process_name(_host, _port, name):
