@@ -21,7 +21,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="pyros-support-ui",
-    version="1.0.0",
+    version="1.1.0",
     author="Daniel Sendula",
     description="Support library for (pygame based) UI components",
     long_description=long_description,

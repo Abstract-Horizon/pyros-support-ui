@@ -9,6 +9,7 @@
 #    Daniel Sendula - initial API and implementation
 #
 #################################################################################
+from typing import Optional
 
 import pygame
 import pyros
@@ -36,10 +37,11 @@ _WHITE = (255, 255, 255)
 
 
 class _DiscoveredRover:
-    def __init__(self, host: str, port: int, name: str):
+    def __init__(self, host: str, port: int, name: str, predefined: bool = False):
         self.host = host
         self.port = port
         self.name = name
+        self.predefined = predefined
 
 
 class ScreenFrame(Component):
@@ -192,17 +194,18 @@ class PyrosClientApp(Collection):
                  font=None,
                  small_font=None,
                  connect_to_first=False,
-                 connect_to_only=True):
+                 connect_to_only=True,
+                 rover_filter=None):
         super(PyrosClientApp, self).__init__(None)  # Call super constructor to store rectable
         self.ui_factory = ui_factory
-        self.ui_adapter = ui_factory.get_ui_adapter()
+        self.ui_adapter = ui_factory.ui_adapter
         self.content = None
         self.background_image = background_image
         self.logo_image = logo_image
         self.logo_alt_image = logo_alt_image if logo_alt_image else logo_image
         self.line_colour = ui_factory.colour
-        self.font = font if font is not None else self.ui_factory.get_font()
-        self.small_font = small_font if small_font is not None else self.ui_factory.get_small_font()
+        self.font = font if font is not None else self.ui_factory.font
+        self.small_font = small_font if small_font is not None else self.ui_factory.small_font
         
         self.screen_frame = ScreenFrame(None, self.line_colour, ui_factory.background_colour,
                                         background_image=background_image,
@@ -213,6 +216,7 @@ class PyrosClientApp(Collection):
         self.thread = None
         self.connect_to_first = connect_to_first
         self.connect_to_only = connect_to_only
+        self.rover_filter = rover_filter
         self._first_discovery_run = True
         self.rovers_button = PyrosServersButton(Rect(0, 0, 100, 30), ui_factory.colour,
                                                 font=self.font,
@@ -225,7 +229,7 @@ class PyrosClientApp(Collection):
         # self.rovers_menu.add_menu_item("item2", partial(self._select_rover, 1), height=30)
         self.add_component(self.rovers_menu)
         self.on_connected_subscribers = []
-        self.redefine_rect(self.ui_adapter.get_screen().get_rect())
+        self.redefine_rect(self.ui_adapter.screen.get_rect())
 
     def _show_rovers_action(self, _button, _pos):
         self.rovers_menu.show()
@@ -329,11 +333,36 @@ class PyrosClientApp(Collection):
     def remove_on_connected_subscriber(self, subscriber):
         self.on_connected_subscribers.remove(subscriber)
 
-    def run_discovery(self):
+    def add_from_arguments(self, host_port: str, extra_data: dict = None):
+        kv = host_port.split(":")
+        if len(kv) == 1:
+            kv.append("1883")
+
+        rover_map = {
+            "IP": kv[0],
+            "PORT": int(kv[1]),
+            "NAME": "Rover(args)",
+            "TYPE": "ROVER",
+            "PYROS": int(kv[1])
+        }
+        if extra_data is not None:
+            rover_map.update(extra_data)
+
+        rover = self.create_to_rover(rover_map)
+        rover.predefined = True
+
+        self.rovers_button.rovers.append(rover)
+        self.rovers_menu.add_menu_item(rover.name, partial(self._select_rover, rover), height=30)
+
+        self.rovers_button.selected_rover = rover
+        pyros.connect(rover.host, rover.port, wait_to_connect=False)
+        self._first_discovery_run = False
+
+    def create_to_rover(self, response: dict) -> Optional[_DiscoveredRover]:
         def process_name(_host, _port, name):
             return "Unknown Rover" if name is None else name.replace("gcc-rover-", "GCC Rover ")
 
-        def make_rover(host, port, name):
+        def make_rover(host: str, port: str, name: str) -> Optional[_DiscoveredRover]:
             # noinspection PyBroadException
             try:
                 _port = int(port)
@@ -341,19 +370,19 @@ class PyrosClientApp(Collection):
             except Exception:
                 return None
 
-        def respomse_to_rover(response):
-            rover = None
-            if 'IP' in response and 'PYROS' in response:
-                rover = make_rover(response['IP'], response['PYROS'], process_name(response['IP'], response['PYROS'], response.get('NAME')))
-            elif 'IP' in response and 'PORT' in response and 'TYPE' in response and response['TYPE'] == 'ROVER':
-                # backward compatibility
-                rover = make_rover(response['IP'], response['PORT'], process_name(response['IP'], response['PORT'], response.get('NAME')))
-            # else:
-            #     rover = make_rover(response['IP'], 1883, process_name(response['IP'], 1883, response.get('NAME')))
-            return rover
+        rover = None
+        if 'IP' in response and 'PYROS' in response:
+            rover = make_rover(response['IP'], response['PYROS'], process_name(response['IP'], response['PYROS'], response.get('NAME')))
+        elif 'IP' in response and 'PORT' in response and 'TYPE' in response and response['TYPE'] == 'ROVER':
+            # backward compatibility
+            rover = make_rover(response['IP'], response['PORT'], process_name(response['IP'], response['PORT'], response.get('NAME')))
+        # else:
+        #     rover = make_rover(response['IP'], 1883, process_name(response['IP'], 1883, response.get('NAME')))
+        return rover if self.rover_filter is None or self.rover_filter(response, rover) else None
 
+    def run_discovery(self):
         def connect_to_first_callback(response):
-            rover = respomse_to_rover(response)
+            rover = self.create_to_rover(response)
             self.rovers_button.selected_rover = rover
             pyros.connect(rover.host, rover.port, wait_to_connect=False)
 
@@ -365,7 +394,7 @@ class PyrosClientApp(Collection):
         existing_rover_ids = set([r.host + str(r.port) + (r.name if r.name is not None else "") for r in self.rovers_button.rovers])
         new_rovers = []
         for response in responses:
-            rover = respomse_to_rover(response)
+            rover = self.create_to_rover(response)
             if rover is not None:
                 new_rovers.append(rover)
 
@@ -373,8 +402,9 @@ class PyrosClientApp(Collection):
 
         if existing_rover_ids != new_rover_ids:
             self.rovers_menu.clear_menu_items()
+            predefined_rovers = [rover for rover in self.rovers_button.rovers if rover.predefined]
             del self.rovers_button.rovers[:]
-            for rover in new_rovers:
+            for rover in predefined_rovers + new_rovers:
                 self.rovers_button.rovers.append(rover)
                 self.rovers_menu.add_menu_item(rover.name, partial(self._select_rover, rover), height=30)
 
@@ -405,17 +435,17 @@ class PyrosClientApp(Collection):
 
     def key_down(self, code):
         if code == pygame.K_TAB:
-            if self.rovers_menu.is_visible():
+            if self.rovers_menu.visible:
                 self.rovers_menu.hide()
             else:
                 self._show_rovers_action(None, None)
             return True
 
-        if self.rovers_menu.is_visible():
+        if self.rovers_menu.visible:
             return self.rovers_menu.key_down(code)
         return False
 
     def key_up(self, code):
-        if self.rovers_menu.is_visible():
+        if self.rovers_menu.visible:
             return self.rovers_menu.key_up(code)
         return False

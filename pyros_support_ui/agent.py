@@ -91,6 +91,8 @@ def process(topic, message, _groups):
             agent_id = topic[5: len(topic) - 7]
             if message.startswith("stored "):
                 filename = message[7:]
+                if filename not in _agent_files[agent_id] and filename.endswith("_main.py"):
+                    filename = filename[:-8] + ".py"
                 if filename in _agent_files[agent_id]:
                     i = _agent_files[agent_id].index(filename)
                     del _agent_files[agent_id][i]

@@ -9,6 +9,7 @@
 #    Daniel Sendula - initial API and implementation
 #
 #################################################################################
+import pygame.color
 
 from pyros_support_ui.components import *
 
@@ -32,11 +33,16 @@ class BorderDecoration(Component):
 
 
 class FlatThemeFactory(BaseUIFactory):
-    def __init__(self, ui_adapter, font=None, small_font=None, colour=pygame.color.THECOLORS['cyan'], background_colour=pygame.color.THECOLORS['gray32'], mouse_over_colour=pygame.color.THECOLORS['lightgray']):
+    def __init__(self, ui_adapter, font=None, small_font=None,
+                 colour=pygame.color.THECOLORS['cyan'],
+                 disabled_colour=pygame.color.THECOLORS['darkblue'],
+                 background_colour=pygame.color.THECOLORS['gray32'],
+                 mouse_over_colour=pygame.color.THECOLORS['lightgray']):
         super(FlatThemeFactory, self).__init__(ui_adapter,
                                                font=font,
                                                small_font=small_font,
                                                colour=colour,
+                                               disabled_colour=disabled_colour,
                                                background_colour=background_colour,
                                                mouse_over_colour=mouse_over_colour)
 
@@ -47,13 +53,15 @@ class FlatThemeFactory(BaseUIFactory):
         self.background_colour = background_colour
 
     def label(self, rect, text, font=None, colour=None, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP, hint=UiHint.NORMAL):
-        label = Label(rect, text, font=font if font is not None else self.font, colour=colour, h_alignment=h_alignment, v_alignment=v_alignment)
-        return label
+        return Label(rect, text, font=font if font is not None else self.font, colour=colour, h_alignment=h_alignment, v_alignment=v_alignment)
+
+    def _disabled_label(self, rect, text, font=None, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP, hint=UiHint.NORMAL):
+        return Label(rect, text, font=font if font is not None else self.font, colour=self.disabled_colour, h_alignment=h_alignment, v_alignment=v_alignment)
 
     def image(self, rect, image, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP, hint=UiHint.NORMAL):
         return Image(rect, image, h_alignment=h_alignment, v_alignment=v_alignment)
 
-    def button(self, rect, on_click=None, on_hover=None, label=None, hint=UiHint.NORMAL):
+    def button(self, rect, on_click=None, on_hover=None, label=None, disabled_label=None, hint=UiHint.NORMAL):
         background_colour = self.background_colour
         mouse_over_colour = self.mouse_over_colour
         if hint == UiHint.WARNING:
@@ -63,21 +71,21 @@ class FlatThemeFactory(BaseUIFactory):
             background_colour = pygame.color.THECOLORS['indianred4']
             mouse_over_colour = pygame.color.THECOLORS['indianred']
         if hint == UiHint.NO_DECORATION:
-            return Button(rect, on_click, on_hover, label,
+            return Button(rect, on_click, on_hover, label, disabled_label=disabled_label,
                           background_decoration=ButtonDecoration(background_colour),
                           mouse_over_decoration=ButtonDecoration(mouse_over_colour))
         else:
-            return Button(rect, on_click, on_hover, label,
+            return Button(rect, on_click, on_hover, label, disabled_label=disabled_label,
                           background_decoration=ButtonDecoration(background_colour),
                           mouse_over_decoration=ButtonDecoration(mouse_over_colour))
 
-    def panel(self, rect, background_colour=None, hint=UiHint.NORMAL):
+    def panel(self, rect, background_colour=None, layout: Optional[BaseLayout] = None, hint=UiHint.NORMAL):
         if background_colour is None:
             if hint == UiHint.WARNING:
                 background_colour = pygame.color.THECOLORS['orange']
             elif hint == UiHint.ERROR:
                 background_colour = pygame.color.THECOLORS['red']
-        return Panel(rect, background_colour, decoration=BorderDecoration(self.colour))
+        return Panel(rect, background_colour, decoration=BorderDecoration(self.colour), layout=layout)
 
     def menu(self, rect, background_colour=None, hint=UiHint.NORMAL):
         if background_colour is None:
