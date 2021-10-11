@@ -16,7 +16,7 @@ from pyros_support_ui.components import *
 
 class BackgroundChangeDecoration(Component):
     def __init__(self, colour):
-        super(BackgroundChangeDecoration, self).__init__(None)  # Call super constructor to store rectable
+        super().__init__(None)  # Call super constructor to store rectable
         self.colour = colour
 
     def draw(self, surface):
@@ -25,7 +25,7 @@ class BackgroundChangeDecoration(Component):
 
 class MenuButtonBackgroundDecoration(Component):
     def __init__(self, colour):
-        super(MenuButtonBackgroundDecoration, self).__init__(None)  # Call super constructor to store rectangle
+        super().__init__(None)  # Call super constructor to store rectangle
         self.colour = colour
 
     def draw(self, surface):
@@ -34,7 +34,7 @@ class MenuButtonBackgroundDecoration(Component):
 
 class ButtonRectangleDecoration(Component):
     def __init__(self, colour, background_colour):
-        super(ButtonRectangleDecoration, self).__init__(None)  # Call super constructor to store rectangle
+        super().__init__(None)  # Call super constructor to store rectangle
         self.colour = colour
         self.background_colour = background_colour
         self.strip_width = 5
@@ -51,10 +51,7 @@ class ButtonRectangleDecoration(Component):
         x2 = self.rect.right - 1
         y1 = self.rect.y
         y2 = self.rect.bottom - 1
-        try:
-            pygame.draw.rect(surface, self.colour, pygame.Rect(x1, y1, self.strip_width, self.rect.height))
-        except Exception:
-            print(self.colour)
+        pygame.draw.rect(surface, self.colour, pygame.Rect(x1, y1, self.strip_width, self.rect.height))
         pygame.draw.line(surface, self.colour, (x1 + self.strip_width + self.strip_margin, y1), (x2 - self.cut_size, y1))
         pygame.draw.line(surface, self.colour, (x2 - self.cut_size, y1), (x2, y1 + self.cut_size))
         pygame.draw.line(surface, self.colour, (x2, y1 + self.cut_size), (x2, y2))
@@ -70,17 +67,29 @@ class ButtonRectangleDecoration(Component):
 
 
 class BorderDecoration(Component):
-    def __init__(self, rect, colour):
-        super(BorderDecoration, self).__init__(rect)  # Call super constructor to store rectangle
+    def __init__(self, rect, colour, background_colour=None,
+                 horizontal_margin: int = 0,
+                 vertical_margin: int = 0):
+        super().__init__(rect)  # Call super constructor to store rectangle
         self.colour = colour
+        self.background_colour = background_colour
         self.top_left_cut = 8
         self.bottom_right_cut = 5
+        self.horizontal_margin = horizontal_margin
+        self.vertical_margin = vertical_margin
 
     def draw(self, surface):
-        x1 = self.rect.x
-        x2 = self.rect.right - 1
-        y1 = self.rect.y
-        y2 = self.rect.bottom - 1
+        if self.background_colour is not None:
+            pygame.draw.rect(surface, self.background_colour, self.rect)
+
+        x1 = self.rect.x + self.horizontal_margin
+        x2 = self.rect.right - 1 - self.horizontal_margin
+        y1 = self.rect.y + self.vertical_margin
+        y2 = self.rect.bottom - 1 - self.vertical_margin
+        # x1 = self.rect.x
+        # x2 = self.rect.right - 1
+        # y1 = self.rect.y
+        # y2 = self.rect.bottom - 1
 
         pygame.draw.polygon(surface, self.colour, [
             (x1 + self.top_left_cut, y1),
@@ -97,18 +106,27 @@ class BoxBlueSFThemeFactory(BaseUIFactory):
                  font=None,
                  small_font=None,
                  colour=pygame.color.THECOLORS['cornflowerblue'],
+                 warning_colour=pygame.color.THECOLORS['orange'],
+                 error_colour=pygame.color.THECOLORS['red'],
                  disabled_colour=pygame.color.THECOLORS['gray'],
                  background_colour=(0, 0, 0, 255),
                  mouse_over_colour=pygame.color.THECOLORS['yellow'],
-                 mouse_over_background_colour=pygame.color.THECOLORS['gray32']):
-        super(BoxBlueSFThemeFactory, self).__init__(ui_adapter,
-                                                    font=font,
-                                                    small_font=small_font,
-                                                    colour=colour,
-                                                    disabled_colour=disabled_colour,
-                                                    background_colour=background_colour,
-                                                    mouse_over_colour=mouse_over_colour)
-        self.mouse_over_background_colour = mouse_over_background_colour
+                 mouse_over_background_colour=pygame.color.THECOLORS['gray32'],
+                 warning_mouse_over_background_colour=pygame.color.THECOLORS['darkorange4'],
+                 error_mouse_over_background_colour=pygame.color.THECOLORS['darkred']):
+        super().__init__(ui_adapter,
+                         font=font,
+                         small_font=small_font,
+                         colour=colour,
+                         warning_colour=warning_colour,
+                         error_colour=error_colour,
+                         disabled_colour=disabled_colour,
+                         background_colour=background_colour,
+                         mouse_over_colour=mouse_over_colour,
+                         mouse_over_background_colour=mouse_over_background_colour,
+                         warning_mouse_over_background_colour=warning_mouse_over_background_colour,
+                         error_mouse_over_background_colour=error_mouse_over_background_colour
+                         )
 
     def setMouseOverColour(self, mouse_over_colour):
         self.mouse_over_colour = mouse_over_colour
@@ -132,22 +150,29 @@ class BoxBlueSFThemeFactory(BaseUIFactory):
         mouse_over_colour = self.mouse_over_colour
         mouse_over_background_colour = self.mouse_over_background_colour
         if hint == UiHint.WARNING:
-            colour = pygame.color.THECOLORS['orange']
+            colour = self.warning_colour
             background_colour = self.background_colour
-            mouse_over_colour = pygame.color.THECOLORS['orange']
-            mouse_over_background_colour = pygame.color.THECOLORS['darkorange4']
+            mouse_over_colour = self.warning_colour
+            mouse_over_background_colour = self.warning_mouse_over_background_colour
         elif hint == UiHint.ERROR:
-            colour = pygame.color.THECOLORS['red']
+            colour = self.error_colour
             background_colour = self.background_colour
-            mouse_over_colour = pygame.color.THECOLORS['red']
-            mouse_over_background_colour = pygame.color.THECOLORS['darkred']
+            mouse_over_colour = self.error_colour
+            mouse_over_background_colour = self.error_mouse_over_background_colour
+
         if hint == UiHint.NO_DECORATION:
-            return Button(rect, on_click, on_hover, label, disabled_label=disabled_label,
-                          mouse_over_decoration=BackgroundChangeDecoration(mouse_over_background_colour))
+            background_decoration = None
+            mouse_over_decoration = BackgroundChangeDecoration(mouse_over_background_colour)
+        elif hint == UiHint.LIGHT:
+            background_decoration = BorderDecoration(None, colour, background_colour)
+            mouse_over_decoration = BorderDecoration(None, mouse_over_colour, mouse_over_background_colour)
         else:
-            return Button(rect, on_click, on_hover, label, disabled_label=disabled_label,
-                          background_decoration=ButtonRectangleDecoration(colour, background_colour),
-                          mouse_over_decoration=ButtonRectangleDecoration(mouse_over_colour, mouse_over_background_colour))
+            background_decoration = ButtonRectangleDecoration(colour, background_colour)
+            mouse_over_decoration = ButtonRectangleDecoration(mouse_over_colour, mouse_over_background_colour)
+
+        return Button(rect, on_click, on_hover, label, disabled_label=disabled_label,
+                      background_decoration=background_decoration,
+                      mouse_over_decoration=mouse_over_decoration)
 
     def panel(self, rect, background_colour=None, layout: Optional[BaseLayout] = None, hint=UiHint.NORMAL):
         if background_colour is None:
@@ -155,7 +180,15 @@ class BoxBlueSFThemeFactory(BaseUIFactory):
                 background_colour = pygame.color.THECOLORS['orange']
             elif hint == UiHint.ERROR:
                 background_colour = pygame.color.THECOLORS['red']
-        return Panel(rect, background_colour, decoration=BorderDecoration(rect, self.colour), layout=layout)
+
+        decoration = None if hint == UiHint.NO_DECORATION else BorderDecoration(rect, self.colour,) # horizontal_margin=4, vertical_margin=4)
+        inner_spacing = 0 if hint == UiHint.NO_DECORATION else 4
+        return Panel(rect,
+                     background_colour,
+                     decoration=decoration,
+                     layout=layout,
+                     horizontal_decoration_margin=inner_spacing,
+                     vertical_decoration_margin=inner_spacing)
 
     def menu(self, rect, background_colour=None, hint=UiHint.NORMAL):
         if background_colour is None:

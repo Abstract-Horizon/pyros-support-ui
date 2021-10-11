@@ -9,7 +9,7 @@
 #    Daniel Sendula - initial API and implementation
 #
 #################################################################################
-from enum import Enum
+from enum import Enum, auto
 from typing import Tuple, List, Optional
 
 import pygame
@@ -18,12 +18,12 @@ from pygame.font import Font
 
 
 class ALIGNMENT(Enum):
-    LEFT = 1
-    CENTER = 2
-    RIGHT = 3
-    TOP = 4
-    MIDDLE = 5
-    BOTTOM = 6
+    LEFT = auto()
+    CENTER = auto()
+    RIGHT = auto()
+    TOP = auto()
+    MIDDLE = auto()
+    BOTTOM = auto()
 
 
 class Component:
@@ -121,11 +121,13 @@ class LeftRightLayout(BaseLayout):
 
 
 class Collection(Component):
-    def __init__(self, rect, layout: Optional[BaseLayout] = None):
+    def __init__(self, rect, layout: Optional[BaseLayout] = None, components: List[Component] = ()):
         super().__init__(rect)  # Call super constructor to store rectable
         self.components: List[Component] = []
         self.layout = layout
         self._selected_component: Optional[Component] = None
+        for component in components:
+            self.add_component(component)
 
     def add_component(self, component: Component) -> None:
         self.components.append(component)
@@ -190,20 +192,33 @@ class Collection(Component):
 
 
 class Panel(Collection):
-    def __init__(self, rect, background_colour=None, decoration: Optional[Component] = None, layout: Optional[BaseLayout] = None):
-        super(Panel, self).__init__(rect, layout=layout)
+    def __init__(self, rect: Rect,
+                 background_colour=None,
+                 decoration: Optional[Component] = None,
+                 layout: Optional[BaseLayout] = None,
+                 horizontal_decoration_margin: int = 0,
+                 vertical_decoration_margin: int = 0):
+        super().__init__(rect, layout=layout)
         self.bacground_colour = background_colour
         self.decoration = decoration
+        self.horizontal_decoration_margin = horizontal_decoration_margin
+        self.vertical_decoration_margin = vertical_decoration_margin
 
     def redefine_rect(self, rect):
-        super(Panel, self).redefine_rect(rect)
+        super().redefine_rect(Rect(rect.left + self.horizontal_decoration_margin,
+                                   rect.top + self.vertical_decoration_margin,
+                                   rect.width - self.horizontal_decoration_margin * 2,
+                                   rect.height - self.vertical_decoration_margin * 2))
+        self.rect = rect
         if self.decoration is not None:
             self.decoration.redefine_rect(rect)
 
     def draw(self, surface):
         if self.bacground_colour is not None:
             pygame.draw.rect(surface, self.bacground_colour, self.rect)
-        super(Panel, self).draw(surface)
+        if self.decoration is not None:
+            self.decoration.draw(surface)
+        super().draw(surface)
 
 
 class Menu(Panel):
@@ -542,10 +557,11 @@ class UIAdapter:
 
 
 class UiHint:
-    NO_DECORATION = 0
-    NORMAL = 1
-    WARNING = 2
-    ERROR = 3
+    NO_DECORATION = auto()
+    LIGHT = auto()
+    NORMAL = auto()
+    WARNING = auto()
+    ERROR = auto()
 
 
 class BorderDecoration(Component):
@@ -559,14 +575,24 @@ class BorderDecoration(Component):
 
 class BaseUIFactory:
     def __init__(self, ui_adapter, font=None, small_font=None,
-                 colour=None, disabled_colour=None, background_colour=None, mouse_over_colour=None):
+                 colour=None, warning_colour=None, error_colour=None,
+                 disabled_colour=None, background_colour=None,
+                 mouse_over_colour=None,
+                 mouse_over_background_colour=None,
+                 warning_mouse_over_background_colour=None,
+                 error_mouse_over_background_colour=None):
         self._ui_adapter = ui_adapter
         self._font = font if font is not None else pygame.font.SysFont('Arial', 14)
         self._small_font = small_font if small_font is not None else pygame.font.SysFont('Arial', 9)
         self.colour = colour if colour is not None else pygame.color.THECOLORS['white']
+        self.warning_colour = warning_colour if warning_colour else pygame.color.THECOLORS['orange']
+        self.error_colour = error_colour if error_colour else pygame.color.THECOLORS['red']
         self.disabled_colour = disabled_colour if disabled_colour is not None else pygame.color.THECOLORS['gray']
         self.background_colour = background_colour if background_colour is not None else pygame.color.THECOLORS['black']
         self.mouse_over_colour = mouse_over_colour
+        self.mouse_over_background_colour=mouse_over_background_colour if mouse_over_background_colour else pygame.color.THECOLORS['gray32']
+        self.warning_mouse_over_background_colour=warning_mouse_over_background_colour if warning_mouse_over_background_colour else pygame.color.THECOLORS['darkorange4'],
+        self.error_mouse_over_background_colour=error_mouse_over_background_colour if error_mouse_over_background_colour else pygame.color.THECOLORS['darkred']
 
     @property
     def ui_adapter(self) -> UIAdapter: return self._ui_adapter

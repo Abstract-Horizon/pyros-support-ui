@@ -199,7 +199,8 @@ class PyrosClientApp(Collection):
         super(PyrosClientApp, self).__init__(None)  # Call super constructor to store rectable
         self.ui_factory = ui_factory
         self.ui_adapter = ui_factory.ui_adapter
-        self.content = None
+        self.content: Optional[Component] = None
+        self.modal: Optional[Component] = None
         self.background_image = background_image
         self.logo_image = logo_image
         self.logo_alt_image = logo_alt_image if logo_alt_image else logo_image
@@ -231,6 +232,13 @@ class PyrosClientApp(Collection):
         self.on_connected_subscribers = []
         self.redefine_rect(self.ui_adapter.screen.get_rect())
 
+    def set_modal(self, modal: Component) -> None:
+        self.modal = modal
+        self.modal.redefine_rect(self.rect)
+
+    def clear_modal(self) -> None:
+        self.modal = None
+
     def _show_rovers_action(self, _button, _pos):
         self.rovers_menu.show()
 
@@ -256,6 +264,15 @@ class PyrosClientApp(Collection):
                       rect.bottom - self.rovers_button.rect.bottom - self.screen_frame.margin * 2 - 2)
         self.content.redefine_rect(inside)
 
+    def find_component(self, pos) -> Optional[Component]:
+        if self.modal is not None:
+            rect = self.modal.rect
+            if self.modal.visible and rect is not None and rect.collidepoint(pos):
+                return self.modal
+        else:
+            return super().find_component(pos)
+        return None
+
     def redefine_rect(self, rect):
         # super(RoverClientApp, self).redefine_rect(rect)
         self.rect = rect
@@ -264,6 +281,9 @@ class PyrosClientApp(Collection):
         self.rovers_menu.redefine_rect(Rect(self.rovers_button.rect.x, self.rovers_button.rect.bottom, self.rovers_button.rect.width - self.rovers_button.slate * 2, 10))
         if self.content is not None:
             self._set_contents_rectangle(rect)
+
+        if self.modal is not None:
+            self.modal.draw(rect)
 
     def set_content(self, component):
         self.content = component
@@ -311,11 +331,10 @@ class PyrosClientApp(Collection):
         draw.line(surface, self.line_colour, (screen_rect.x + screen_rect.width - image_size[0] - 12, screen_rect.y + 4),
                   (screen_rect.x + screen_rect.width - image_size[0] - 12, screen_rect.y + image_size[1] + 4))
 
-    def draw(self, surface):
-        super(PyrosClientApp, self).draw(surface)
-        # self.draw_border(surface)
-        # self.content.draw(surface)
-        # self.draw_top(surface)
+    def draw(self, surface) -> None:
+        super().draw(surface)
+        if self.modal is not None:
+            self.modal.draw(surface)
 
     def pyros_init(self, pyros_mqtt_client_name, unique=True):
         pyros.init(pyros_mqtt_client_name, unique=unique, host=None, port=1883, wait_to_connect=False, on_connected=self._pyros_connected)

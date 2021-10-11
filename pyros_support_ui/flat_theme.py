@@ -35,16 +35,27 @@ class BorderDecoration(Component):
 class FlatThemeFactory(BaseUIFactory):
     def __init__(self, ui_adapter, font=None, small_font=None,
                  colour=pygame.color.THECOLORS['cyan'],
+                 warning_colour=pygame.color.THECOLORS['orange'],
+                 error_colour=pygame.color.THECOLORS['red'],
                  disabled_colour=pygame.color.THECOLORS['darkblue'],
                  background_colour=pygame.color.THECOLORS['gray32'],
-                 mouse_over_colour=pygame.color.THECOLORS['lightgray']):
+                 mouse_over_colour=pygame.color.THECOLORS['lightgray'],
+                 mouse_over_background_colour=pygame.color.THECOLORS['gray32'],
+                 warning_mouse_over_background_colour=pygame.color.THECOLORS['darkorange4'],
+                 error_mouse_over_background_colour=pygame.color.THECOLORS['darkred']
+                 ):
         super(FlatThemeFactory, self).__init__(ui_adapter,
                                                font=font,
                                                small_font=small_font,
                                                colour=colour,
+                                               warning_colour=warning_colour,
+                                               error_colour=error_colour,
                                                disabled_colour=disabled_colour,
                                                background_colour=background_colour,
-                                               mouse_over_colour=mouse_over_colour)
+                                               mouse_over_colour=mouse_over_colour,
+                                               mouse_over_background_colour=mouse_over_background_colour,
+                                               warning_mouse_over_background_colour=warning_mouse_over_background_colour,
+                                               error_mouse_over_background_colour=error_mouse_over_background_colour)
 
     def setMouseOverColour(self, mouse_over_colour):
         self.mouse_over_colour = mouse_over_colour

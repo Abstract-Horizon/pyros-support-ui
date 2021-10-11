@@ -19,6 +19,7 @@ from pyros_support_ui.components import Component, Collection, ALIGNMENT, UiHint
 Number = Union[int, float]
 GetterSetterPair = Tuple[Callable[[], Number], Callable[[Number], None]]
 
+
 class NumberInputComponent(Collection):
 
     def __init__(self,
