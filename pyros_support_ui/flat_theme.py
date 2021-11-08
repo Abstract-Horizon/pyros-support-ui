@@ -33,7 +33,7 @@ class BorderDecoration(Component):
 
 
 class FlatThemeFactory(BaseUIFactory):
-    def __init__(self, ui_adapter, font=None, small_font=None,
+    def __init__(self, ui_adapter, font=None, small_font=None, antialias=False,
                  colour=pygame.color.THECOLORS['cyan'],
                  warning_colour=pygame.color.THECOLORS['orange'],
                  error_colour=pygame.color.THECOLORS['red'],
@@ -47,6 +47,7 @@ class FlatThemeFactory(BaseUIFactory):
         super(FlatThemeFactory, self).__init__(ui_adapter,
                                                font=font,
                                                small_font=small_font,
+                                               antialias=antialias,
                                                colour=colour,
                                                warning_colour=warning_colour,
                                                error_colour=error_colour,
@@ -64,10 +65,10 @@ class FlatThemeFactory(BaseUIFactory):
         self.background_colour = background_colour
 
     def label(self, rect, text, font=None, colour=None, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP, hint=UiHint.NORMAL):
-        return Label(rect, text, font=font if font is not None else self.font, colour=colour, h_alignment=h_alignment, v_alignment=v_alignment)
+        return Label(rect, text, font=font if font is not None else self.font, antialias=self._antialias, colour=colour, h_alignment=h_alignment, v_alignment=v_alignment)
 
     def _disabled_label(self, rect, text, font=None, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP, hint=UiHint.NORMAL):
-        return Label(rect, text, font=font if font is not None else self.font, colour=self.disabled_colour, h_alignment=h_alignment, v_alignment=v_alignment)
+        return Label(rect, text, font=font if font is not None else self.font, colour=self.disabled_colour, antialias=self._antialias, h_alignment=h_alignment, v_alignment=v_alignment)
 
     def image(self, rect, image, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP, hint=UiHint.NORMAL):
         return Image(rect, image, h_alignment=h_alignment, v_alignment=v_alignment)

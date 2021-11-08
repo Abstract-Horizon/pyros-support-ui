@@ -146,8 +146,8 @@ class PyrosServersButton(Button):
             if len(rover_details_text) > 0:
                 w = self.font.size(rover_details_text)[0]
                 sur = self.font.render(rover_details_text, 1, colour)
-                surface.blit(sur, pos)
-                surface.blit(self.small_font.render(_get_selected_rover_ip(rover), 1, colour), (pos[0] + 8 + w, pos[1] + 5))
+                surface.blit(sur, (pos[0], pos[1] + self.font.get_height() // 2))
+                surface.blit(self.small_font.render(_get_selected_rover_ip(rover), 1, colour), (pos[0] + 8 + w, pos[1] + 10))
 
         rect = self.rect
 

@@ -136,7 +136,7 @@ class GraphController:
 
 class Graph(Button):
     # noinspection PyArgumentList
-    def __init__(self, rect: pygame.Rect,
+    def __init__(self, rect: Optional[pygame.Rect],
                  ui_factory: BaseUIFactory, small_font=None, controller: Optional[GraphController] = None,
                  on_click: Optional[Callable[[Tuple[int, int]], None]] = None,
                  inner_colour=pygame.color.THECOLORS['white'],

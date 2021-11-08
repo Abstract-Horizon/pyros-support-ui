@@ -395,11 +395,12 @@ class Image(Component):
 
 
 class Label(Image):
-    def __init__(self, rect, text, colour=None, font=None, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP):
+    def __init__(self, rect, text, colour=None, font=None, antialias=True, h_alignment=ALIGNMENT.LEFT, v_alignment=ALIGNMENT.TOP):
         super(Label, self).__init__(rect, None, h_alignment, v_alignment)  # Call super constructor to store rectable
         self._text = text
         self.font = font
         self._colour = colour if colour is not None else pygame.color.THECOLORS['white']
+        self.antialias = antialias
 
     @property
     def text(self) -> str: return self._text
@@ -423,7 +424,7 @@ class Label(Image):
 
     def draw(self, surface):
         if self._surface is None:
-            self._surface = self._font().render(self._text, False, self.colour)
+            self._surface = self._font().render(self._text, self.antialias, self.colour)
 
         super(Label, self).draw(surface)
 
@@ -574,7 +575,7 @@ class BorderDecoration(Component):
 
 
 class BaseUIFactory:
-    def __init__(self, ui_adapter, font=None, small_font=None,
+    def __init__(self, ui_adapter, font=None, small_font=None, antialias=False,
                  colour=None, warning_colour=None, error_colour=None,
                  disabled_colour=None, background_colour=None,
                  mouse_over_colour=None,
@@ -584,6 +585,7 @@ class BaseUIFactory:
         self._ui_adapter = ui_adapter
         self._font = font if font is not None else pygame.font.SysFont('Arial', 14)
         self._small_font = small_font if small_font is not None else pygame.font.SysFont('Arial', 9)
+        self._antialias = antialias
         self.colour = colour if colour is not None else pygame.color.THECOLORS['white']
         self.warning_colour = warning_colour if warning_colour else pygame.color.THECOLORS['orange']
         self.error_colour = error_colour if error_colour else pygame.color.THECOLORS['red']
